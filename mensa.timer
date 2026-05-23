@@ -1,0 +1,9 @@
+[Unit]
+Description=fetch the menu every day
+
+[Timer]
+OnCalendar=*-*-* 00:01:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

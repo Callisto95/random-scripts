@@ -1,0 +1,10 @@
+[Unit]
+Description=fetch current menu for selected halls
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/callisto/scripts/mensa.nu
+# RuntimeMaxSec=5min
+# no effect with oneshot
