@@ -1,0 +1,21 @@
+LDD R[0], R[1], 0;
+LDD R[0] R[2] 1
+BEQ R[1] R[2] 6
+BGT R[1] R[2] 3
+SUB R[2] R[1] R[2]
+JMP 2
+SUB R[1] R[2] R[1]
+JMP 2
+STO R[0] R[1] 2;     ggT in DSp[2]
+LDD R[0] R[1] 0;      R[1]=A counter
+ADD R[0] R[0] R[2];   R[2]=0 ACC
+LDD R[0] R[3] 1;      R[3]=B const
+ADD R[2] R[3] R[2];   LOOP: add B to ACC
+SUBI R[1] R[1] 1;     remove 1 from counter
+BGT R[1] R[0] -2;     jump back to LOOP if not added enough - R[2] has A*B
+LDD R[0] R[1] 2;     load ggT to R[1]
+ADD R[0] R[0] R[3];  set R[3] (ACC) to 0, prepare division
+SUB R[2] R[1] R[2];  subtract ggT from A*B - LOOP
+ADDI R[3] R[3] 1;    add 1 to ACC
+BGT R[2] R[0] -2;    rest of (A*B - ggT) is bigger than ggT
+STO R[0] R[3] 0
