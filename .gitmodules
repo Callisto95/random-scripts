@@ -1,0 +1,3 @@
+[submodule "tu_bs_scripts"]
+	path = tu_bs_scripts
+	url = ./tu_bs_scripts
