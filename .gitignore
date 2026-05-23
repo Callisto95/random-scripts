@@ -1,0 +1,8 @@
+**/__pycache__/
+.idea/
+*.log
+*.gz
+*.zip
+cachyos-repo/
+
+**/*NO-GIT*
