@@ -1,0 +1,12 @@
+[Unit]
+Description="force HDD spindown after a certain amount of time"
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+
+ExecStart=/usr/bin/python /opt/hdd-spindown/fs_watch.py
+
+[Install]
+WantedBy=multi-user.target
