@@ -50,7 +50,12 @@ class ExternalProcessThread(QThread):
 
 
 class QuickBackUI(QMainWindow):
-    def __init__(self, decider: ImageProcessorFactory, output_directory: Path, commands: dict[str, Callable[[QImage, Path], ExternalResult]]):
+    def __init__(
+        self,
+        decider: ImageProcessorFactory,
+        output_directory: Path | None,
+        commands: dict[str, Callable[[QImage, Path], ExternalResult]],
+    ):
         super().__init__()
         
         self.ui: Ui_MainWindow = Ui_MainWindow()
@@ -59,7 +64,7 @@ class QuickBackUI(QMainWindow):
         self.connect_signals()
         
         self.commands: dict[str, Callable[[QImage, Path], ExternalResult]] = commands
-        self.output_directory: Path = output_directory
+        self.output_directory: Path | None = None if output_directory is None else output_directory.absolute()
         
         # do not GC the thread. It will crash the app
         self.external_process: ExternalProcessThread | None = None
@@ -196,7 +201,12 @@ class QuickBackUI(QMainWindow):
         image: QImage = self.current_image.copy()
         
         # snapshot everything the thread needs, then submit
-        self.pending_future: Future[QImage] = self.executor.submit(modifier.modify, image, offsets)
+        self.pending_future: Future[QImage] = self.executor.submit(
+            modifier.modify,
+            image,
+            offsets,
+            self.pc_ratio.current_ratio() if self.ui.horizontal.isChecked() else self.phone_ratio.current_ratio(),
+        )
         self.pending_future.add_done_callback(self._on_update_done)
     
     def _on_update_done(self, future) -> None:

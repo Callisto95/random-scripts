@@ -6,12 +6,11 @@ from python_scripts.quickbac.data import compute_dimensions, ImageModifier, Modi
 
 
 class Filler(ImageModifier):
-    def __init__(self, ratio: RatioSelector, horizontal: bool):
+    def __init__(self, horizontal: bool):
         self.horizontal: bool = horizontal
-        self.ratio: RatioSelector = ratio
     
-    def modify(self, current_image: QImage, offsets: Offsets) -> QImage:
-        location: Modification = compute_dimensions(current_image, self.ratio.current_ratio(), offsets, False)
+    def modify(self, current_image: QImage, offsets: Offsets, desired_ratio: float) -> QImage:
+        location: Modification = compute_dimensions(current_image, desired_ratio, offsets, False)
         
         base_image: QImage = QImage(QSize(location.target_width, location.target_height), current_image.format())
         base_image.setColorSpace(

@@ -46,16 +46,16 @@ app: QApplication = QApplication([sys.argv[0]] + args.qt_args.split(","))
 
 decider: ImageProcessorFactory = ImageProcessorFactory()
 
+decider.register(True, False, Filler(True))
+decider.register(True, True, Cropper())
+decider.register(False, False, Filler(False))
+decider.register(False, True, Cropper())
+
 ui: QuickBackUI = QuickBackUI(
-    decider, args.output_directory.absolute(), {
+    decider, args.output_directory, {
         "Gimp": run_gimp,
     },
 )
-
-decider.register(True, False, Filler(ui.pc_ratio, True))
-decider.register(True, True, Cropper(ui.pc_ratio))
-decider.register(False, False, Filler(ui.phone_ratio, False))
-decider.register(False, True, Cropper(ui.phone_ratio))
 
 ui.show()
 sys.exit(app.exec())

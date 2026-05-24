@@ -16,7 +16,7 @@ class Modification:
 
 class ImageModifier(ABC):
     @abstractmethod
-    def modify(self, current_image: QImage, offsets: Offsets) -> QImage:
+    def modify(self, current_image: QImage, offsets: Offsets, desired_ratio: float) -> QImage:
         pass
 
 
@@ -38,19 +38,19 @@ class Offsets:
     zoom: float
 
 
-def compute_dimensions(image: QImage, ratio: float, offsets: Offsets, crop: bool) -> Modification:
+def compute_dimensions(image: QImage, desired_ratio: float, offsets: Offsets, crop: bool) -> Modification:
     image_ratio: float = image.width() / image.height()
     
     # Crop: base on the constraining dimension
     # Fill: base on the dominant dimension
-    if (image_ratio > ratio) == crop:
+    if (image_ratio > desired_ratio) == crop:
         height: int = round(image.height() * offsets.zoom)
-        width: int = round(height * ratio)
+        width: int = round(height * desired_ratio)
         x_offset: int = round((width - image.width()) / 2 * offsets.primary)
         y_offset: int = round((height - image.height()) / 2 * offsets.secondary)
     else:
         width: int = round(image.width() * offsets.zoom)
-        height: int = round(width / ratio)
+        height: int = round(width / desired_ratio)
         y_offset: int = round((height - image.height()) / 2 * offsets.primary)
         x_offset: int = round((width - image.width()) / 2 * offsets.secondary)
     

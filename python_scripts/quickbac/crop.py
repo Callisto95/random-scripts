@@ -6,11 +6,8 @@ from python_scripts.quickbac.ui import LOGGER
 
 
 class Cropper(ImageModifier):
-    def __init__(self, ratio: RatioSelector):
-        self.ratio: RatioSelector = ratio
-    
-    def modify(self, current_image: QImage, offsets: Offsets) -> QImage:
-        location: Modification = compute_dimensions(current_image, self.ratio.current_ratio(), offsets, True)
+    def modify(self, current_image: QImage, offsets: Offsets, desired_ratio: float) -> QImage:
+        location: Modification = compute_dimensions(current_image, desired_ratio, offsets, True)
         
         base_image: QImage = QImage(location.target_width, location.target_height, current_image.format())
         base_image.setColorSpace(
