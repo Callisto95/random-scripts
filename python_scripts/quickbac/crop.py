@@ -1,8 +1,8 @@
 from PySide6.QtGui import QColorSpace, QImage, QPainter
 
-from python_scripts.quickbac.alpha import FALLBACK_BACKGROUND_COLOUR, is_alpha
-from python_scripts.quickbac.data import compute_dimensions, ImageModifier, Modification, Offsets, RatioSelector
-from python_scripts.quickbac.ui import LOGGER
+from .alpha import FALLBACK_BACKGROUND_COLOUR, is_alpha
+from .data import compute_dimensions, ImageModifier, Modification, Offsets, RatioSelector
+from .ui import LOGGER
 
 
 class Cropper(ImageModifier):

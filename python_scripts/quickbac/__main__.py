@@ -7,10 +7,10 @@ from tempfile import NamedTemporaryFile
 from PySide6.QtGui import QImage
 from PySide6.QtWidgets import QApplication
 
-from python_scripts.quickbac.crop import Cropper
-from python_scripts.quickbac.data import ImageProcessorFactory
-from python_scripts.quickbac.fill import Filler
-from python_scripts.quickbac.ui import ExternalResult, QuickBackUI
+from .crop import Cropper
+from .data import ImageProcessorFactory
+from .fill import Filler
+from .ui import ExternalResult, QuickBackUI
 
 parser: ArgumentParser = ArgumentParser()
 parser.add_argument(

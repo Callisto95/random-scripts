@@ -20,8 +20,8 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import QFileDialog, QMainWindow
 
 from python_scripts.logger import Logger
-from python_scripts.quickbac.data import ImageModifier, ImageProcessorFactory, Offsets, RatioSelector
-from python_scripts.quickbac.ui_raw import Ui_MainWindow
+from .data import ImageModifier, ImageProcessorFactory, Offsets, RatioSelector
+from .ui_raw import Ui_MainWindow
 
 LOGGER: Logger = Logger("QuickBacUI")
 ZOOM_NORMAL: int = 500

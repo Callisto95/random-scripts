@@ -1,8 +1,8 @@
 from PySide6.QtCore import QRect, QSize
 from PySide6.QtGui import QColor, QColorSpace, QImage, QPainter
 
-from python_scripts.quickbac.alpha import get_colour
-from python_scripts.quickbac.data import compute_dimensions, ImageModifier, Modification, Offsets, RatioSelector
+from .alpha import get_colour
+from .data import compute_dimensions, ImageModifier, Modification, Offsets, RatioSelector
 
 
 class Filler(ImageModifier):
