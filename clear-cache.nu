@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env nu
 
 print "clearing pacman and yay cache"
 yay -Sc --noconfirm
