@@ -108,6 +108,9 @@ class QuickBackUI(QMainWindow):
         self.ui.center.clicked.connect(self.reset_offset)
         self.ui.export.clicked.connect(self.export)
         self.ui.commands.currentIndexChanged.connect(self.run_program_index)
+        
+        self.ui.horizontal.mouseDoubleClickEvent = self.rotate_horizontal_ratio
+        self.ui.vertical.mouseDoubleClickEvent = self.rotate_vertical_ratio
     
     def run_program_index(self) -> None:
         if self.ui.commands.currentIndex() == -1 or self.current_image is None:
@@ -141,7 +144,7 @@ class QuickBackUI(QMainWindow):
         self.ui.commands.setCurrentIndex(-1)
         self.external_process = None
     
-    def rotate_horizontal_ratio(self, skip_advance: bool = False) -> None:
+    def rotate_horizontal_ratio(self, *_, skip_advance: bool = False) -> None:
         ratio: tuple[int, int] = self.pc_ratio.current() if skip_advance else self.pc_ratio.advance()
         
         self.ui.horizontal.setText(
@@ -149,7 +152,7 @@ class QuickBackUI(QMainWindow):
         )
         self.update_current_image()
     
-    def rotate_vertical_ratio(self, skip_advance: bool = False) -> None:
+    def rotate_vertical_ratio(self, *_, skip_advance: bool = False) -> None:
         ratio: tuple[int, int] = self.phone_ratio.current() if skip_advance else self.phone_ratio.advance()
         
         self.ui.vertical.setText(
