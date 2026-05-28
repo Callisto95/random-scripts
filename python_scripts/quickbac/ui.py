@@ -28,25 +28,27 @@ ZOOM_NORMAL: int = 500
 
 
 @dataclass(frozen=True)
-class ExternalResult:
-    new_path: Path
+class LoadedImage:
+    path: Path
     image: QImage
 
 
 class ExternalProcessThread(QThread):
-    resultReady = Signal(ExternalResult)
+    resultReady = Signal(LoadedImage)
     
-    def __init__(self, function: Callable[[QImage, Path], ExternalResult], args: list[Any]):
+    def __init__(self, function: Callable[[LoadedImage], LoadedImage], args: list[Any]):
         super().__init__()
-        self.function: Callable[[QImage, Path], ExternalResult] = function
+        self.function: Callable[[LoadedImage], LoadedImage] = function
         self.args: list[Any] = args
     
     def run(self, /):
         try:
-            result: ExternalResult = self.function(*self.args)
+            result: LoadedImage = self.function(*self.args)
             self.resultReady.emit(result)
         except Exception as exc:
             LOGGER.error(exc)
+            # always make the connected function run
+            self.resultReady.emit(None)
 
 
 class QuickBackUI(QMainWindow):
@@ -54,7 +56,7 @@ class QuickBackUI(QMainWindow):
         self,
         decider: ImageProcessorFactory,
         output_directory: Path | None,
-        commands: dict[str, Callable[[QImage, Path], ExternalResult]],
+        commands: dict[str, Callable[[LoadedImage], LoadedImage]],
     ):
         super().__init__()
         
@@ -63,7 +65,7 @@ class QuickBackUI(QMainWindow):
         self.ui.retranslateUi(self)
         self.connect_signals()
         
-        self.commands: dict[str, Callable[[QImage, Path], ExternalResult]] = commands
+        self.commands: dict[str, Callable[[LoadedImage], LoadedImage]] = commands
         self.output_directory: Path | None = None if output_directory is None else output_directory.absolute()
         
         # do not GC the thread. It will crash the app
@@ -82,8 +84,7 @@ class QuickBackUI(QMainWindow):
         
         self.decider: ImageProcessorFactory = decider
         
-        self.current_image_path: Path | None = None
-        self.current_image: QImage | None = None
+        self.loaded_image: LoadedImage | None = None
         self.finished_image: QImage | None = None
         
         self.ui.commands.addItems(list(commands.keys()))
@@ -113,7 +114,7 @@ class QuickBackUI(QMainWindow):
         self.ui.vertical.mouseDoubleClickEvent = self.rotate_vertical_ratio
     
     def run_program_index(self) -> None:
-        if self.ui.commands.currentIndex() == -1 or self.current_image is None:
+        if self.ui.commands.currentIndex() == -1 or self.loaded_image is None:
             self.ui.commands.setCurrentIndex(-1)
             return
         
@@ -121,21 +122,21 @@ class QuickBackUI(QMainWindow):
         
         self.external_process = ExternalProcessThread(
             self.commands[self.ui.commands.currentText()],
-            [self.current_image, self.current_image_path],
+            [self.loaded_image],
         )
         self.external_process.resultReady.connect(self.finish_run_program)
         self.external_process.start()
     
-    def finish_run_program(self, result: ExternalResult) -> None:
+    def finish_run_program(self, result: LoadedImage | None) -> None:
         if result is None:
             LOGGER.error("Invalid result from external program!")
+            self.setEnabled(True)
             return
         
         LOGGER.info("updating from subprocess...")
         
-        self.current_image_path = result.new_path
-        result.image.setColorSpace(self.current_image.colorSpace())
-        self.current_image = result.image
+        result.image.setColorSpace(self.loaded_image.image.colorSpace())
+        self.loaded_image = LoadedImage(result.path, result.image)
         
         self.update_current_image()
         
@@ -168,13 +169,13 @@ class QuickBackUI(QMainWindow):
         )
     
     def export(self) -> None:
-        if not self.current_image:
+        if self.loaded_image is None:
             return
         
         if self.output_directory is not None:
-            path: Path = self.output_directory / self.current_image_path.name
+            path: Path = self.output_directory / self.loaded_image.path.name
         else:
-            path: Path = self.current_image_path
+            path: Path = self.loaded_image.path
         
         url, _ = QFileDialog.getSaveFileUrl(self, caption="Export as", dir=QUrl.fromLocalFile(path))
         
@@ -192,7 +193,7 @@ class QuickBackUI(QMainWindow):
             Thread(target=lambda: copied_image.save(str(path), quality=0)).start()
     
     def _do_update(self) -> None:
-        if not self.current_image:
+        if not self.loaded_image:
             return
         
         # cancel any in-flight work
@@ -201,7 +202,7 @@ class QuickBackUI(QMainWindow):
         
         modifier: ImageModifier = self.decider.get(self.ui.horizontal.isChecked(), self.ui.crop.isChecked())
         offsets: Offsets = self.get_offsets()
-        image: QImage = self.current_image.copy()
+        image: QImage = self.loaded_image.image.copy()
         
         # snapshot everything the thread needs, then submit
         self.pending_future: Future[QImage] = self.executor.submit(
@@ -212,7 +213,7 @@ class QuickBackUI(QMainWindow):
         )
         self.pending_future.add_done_callback(self._on_update_done)
     
-    def _on_update_done(self, future) -> None:
+    def _on_update_done(self, future: Future[QImage]) -> None:
         if future.cancelled():
             return
         
@@ -229,7 +230,7 @@ class QuickBackUI(QMainWindow):
         self.ui.image.setPixmap(QPixmap.fromImage(converted_image))
         
         self.setWindowTitle(
-            f"{self.current_image_path.name} - {self.finished_image.width()}x{self.finished_image.height()} - QuickBac",
+            f"{self.loaded_image.path.name} - {self.finished_image.width()}x{self.finished_image.height()} - QuickBac",
         )
     
     def draw_guides(self, image: QImage) -> None:
@@ -262,7 +263,7 @@ class QuickBackUI(QMainWindow):
         painter.end()
     
     def update_current_image(self) -> None:
-        if not self.current_image:
+        if not self.loaded_image:
             return
         
         if self.ui.crop.isChecked():
@@ -280,9 +281,8 @@ class QuickBackUI(QMainWindow):
         self.ui.offset_secondary.setEnabled(False)
     
     def reset(self) -> None:
-        self.current_image = None
         self.finished_image = None
-        self.current_image_path = None
+        self.loaded_image = None
         self.ui.image.setPixmap(QPixmap())
         
         self.reset_offset()
@@ -300,11 +300,10 @@ class QuickBackUI(QMainWindow):
     def dropEvent(self, event: QDropEvent, /) -> None:
         self.reset()
         
-        file_path: str = event.mimeData().urls()[0].toLocalFile()
-        self.current_image_path: Path = Path(file_path)
-        self.current_image = QImage(self.current_image_path)
+        path: Path = Path(event.mimeData().urls()[0].toLocalFile())
+        self.loaded_image = LoadedImage(path, QImage(path))
         
-        LOGGER.info(f"new image: {file_path}")
+        LOGGER.info(f"new image: {path}")
         
         self.update_current_image()
     

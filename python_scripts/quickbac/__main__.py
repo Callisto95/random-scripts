@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QApplication
 from .crop import Cropper
 from .data import ImageProcessorFactory
 from .fill import Filler
-from .ui import ExternalResult, QuickBackUI
+from .ui import LoadedImage, QuickBackUI
 
 parser: ArgumentParser = ArgumentParser()
 parser.add_argument(
@@ -31,15 +31,15 @@ parser.add_argument(
 args: Namespace = parser.parse_args()
 
 
-def run_gimp(image: QImage, path: Path) -> ExternalResult:
-    with NamedTemporaryFile("w", suffix=path.suffix) as file:
-        image.save(file.name, format="png")
+def run_gimp(loaded_image: LoadedImage) -> LoadedImage:
+    with NamedTemporaryFile("w", suffix=loaded_image.path.suffix) as file:
+        loaded_image.image.save(file.name, format="png")
         
         run(["gimp", file.name], stdout=DEVNULL, stderr=DEVNULL)
         
         result: QImage = QImage(file.name)
         
-        return ExternalResult(path, result)
+        return LoadedImage(loaded_image.path, result)
 
 
 app: QApplication = QApplication([sys.argv[0]] + args.qt_args.split(","))
